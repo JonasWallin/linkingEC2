@@ -79,7 +79,7 @@ class LinkingHandler(object):
     
             self.copy_files_to_nodes(file_name = self.my_key_location, 
                                      destination = '~/.ssh/id_rsa')
-            self._ssh_keyscan()
+            self._ssh_disable_StrictHostKeyChecking()
             #copy_file_to_nodes(nodes = self.nodes, 
             #                   file_location = self.my_key_location, 
             #                   destination = '~/.ssh/id_rs',
@@ -87,34 +87,22 @@ class LinkingHandler(object):
                         
             self.setup_nodefile()
         
-    def _ssh_keyscan(self):
+    def _ssh_disable_StrictHostKeyChecking(self):
         """
-            After coppied ssh key to the nodes  run a keyscan
-            so dont need to very fingerprint
+            disable StrictHostKeyChecking in the first node
         """
         if not self.silent:
-            print("ssh-kescan the nodes from auto login from {name}:".format(name = self.nodes[0]['name']),end='')
+            print("disable StrictHostKeyChecking  in {name}:".format(name = self.nodes[0]['name']),end='')
             sys.stdout.flush()        
 
-        hosts = ''
-        for node in self.nodes:
-            hosts += ' {ip}'.format( ip = node['private_ip'])
+  
+        create_file_to_nodes(nodes         = self.nodes[0], 
+                           file_name       = '~/.ssh/config', 
+                           file_content    = 'StrictHostKeyChecking no',
+                           my_key          = self.my_key_location,
+                           user            = self.user,
+                           silent          = True)
 
-        message = 'ssh-keyscan {hosts}'.format(hosts = hosts)       
-        
-        input_string = "ssh  -i {keyloc} -o 'StrictHostKeyChecking no'  {user}@{hostname} 'echo {message}'".format(
-                            keyloc   = self.my_key_location,
-                            user     = self.user,
-                            hostname = self.nodes[0]['public_dns'],
-                            message  = message)
-        os_res = os.system(input_string)
-        
-        if not self.silent:        
-            if os_res == 0:
-                print('done')
-            else:
-                print('failed')
-        return os_res
     
     def copy_files_to_nodes(self, file_name, destination = '~/', nodes = None):
         """
