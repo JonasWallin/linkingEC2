@@ -93,7 +93,7 @@ class LinkingHandler(object):
             so dont need to very fingerprint
         """
         if not self.silent:
-            print("ssh-kescan the nodes from auto login from {name}:".format(name = node['name']),end='')
+            print("ssh-kescan the nodes from auto login from {name}:".format(name = node[0]['name']),end='')
             sys.stdout.flush()        
 
         hosts = ''
