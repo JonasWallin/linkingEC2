@@ -27,7 +27,7 @@ def _remote(host, cmd='scp', user='root' , src=None  , dest=None,
     else:
         template = 'ssh     %(switches)s -o "StrictHostKeyChecking no" %(user)s@%(host)s "%(cmd)s" '
 
-    cmdline = template % d 	
+    cmdline = template % d     
 
     os_res = 0
     if not silent:
@@ -51,7 +51,7 @@ def get_dns_name(reservations, conn, silent = False):
             sys.stdout.flush()
             
         while( res[0].instances[0].update()=='pending'):
-            sleep(0.2)
+            sleep(5)
             print('*',end='')
             sys.stdout.flush()
         if not silent:
@@ -69,7 +69,9 @@ def get_dns_name(reservations, conn, silent = False):
                       'private_ip' :    private_ip_address})
     
     return nodes
-    
+
+
+
 def get_number_processes(nodes, my_key, user = 'ubuntu', silent=False):
     """ collects how many processes each node has in the clusters
         and appends it to the nodes
@@ -112,12 +114,12 @@ def _remote_on_node(node, silent, my_key, input_string, user, message = 'running
         print('{message} for {node}'.format(message = message, node = node['name']),end='')
         sys.stdout.flush()
 
-    os_res = remote(host = node['public_dns'], cmd = input_string,
+    os_res = _remote(host = node['public_dns'], cmd = input_string,
                     credential = my_key, test = False, user = user,silent = True)
     if os_res != 0:
         print(' failed:')
         if not silent:
-            remote(host = node['public_dns'], cmd = input_string,
+            _remote(host = node['public_dns'], cmd = input_string,
                     credential = my_key, test = True, user = user,silent = False)
         sys.stdout.flush()
         res = 1
@@ -145,10 +147,12 @@ def update_apt_get_to_nodes(nodes, my_key, user = 'ubuntu', silent= False,
         res = _remote_on_node(node, silent, my_key, input_string, user, message = 'update apt-get')          
         if stop_install_fail and res != 0:
             break
-        input_string = 'sudo apt-get -y upgrade'
+        input_string = 'sudo apt-get -y upgrade -y'
         res = _remote_on_node(node, silent, my_key, input_string, user, message = 'upgrade apt-get') 
         if stop_install_fail and res != 0:
-            break
+            return res
+    
+    return res
 
 def copy_file_to_nodes(nodes, file_location, destination, my_key, user = 'ubuntu', silent = False):
     """
@@ -170,26 +174,29 @@ def copy_file_to_nodes(nodes, file_location, destination, my_key, user = 'ubuntu
     if not silent:
         print('copying {files} to external {dest}'.format(files= file_location, dest = destination))
     
+    os_res = 0    
     for node in nodes:
         
         if not silent:
             print('copying files to {name}'.format(name = node['name']), end = '')
             sys.stdout.flush()
             
-        os_res = remote(host = node['public_dns'], src = file_location,
+        os_res = _remote(host = node['public_dns'], src = file_location,
                     dest=destination ,credential = my_key, test = False, user = user, silent = True)
         
         if os_res != 0:
             print(' failed : ')
             if not silent:
-                remote(host = node['public_dns'], src = file_location,
+                _remote(host = node['public_dns'], src = file_location,
                         dest=destination ,credential = my_key, test = True, user = user, silent = False)
             sys.stdout.flush()
-            res = 1
+            return os_res
+            
         elif not silent:
             print(' done')
             sys.stdout.flush() 
-
+    
+    return os_res
 def create_file_to_nodes(nodes, file_name, my_key, file_content ='', sudo = False, user = 'ubuntu', silent = False,
                          test = False):
     """
@@ -296,9 +303,12 @@ def import_package_to_nodes(packages, nodes, my_key, method = 'apt', user = 'ubu
         print( 'installing the packages : {packages}'.format(packages = packages))
         sys.stdout.flush()
     
+    res = 0
     for node in nodes:
         
         res = _remote_on_node(node, silent, my_key, input_string, user, message = 'installing package') 
         
         if stop_install_fail and res != 0:
-            break
+            return res
+    
+    return res
