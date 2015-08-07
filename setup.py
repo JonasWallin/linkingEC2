@@ -19,6 +19,5 @@ metadata = dict(name='linkingEC2',
 	maintainer_email = 'jonas.wallin81@gmail.com',
 	url              = 'https://github.com/JonasWallin/linkingEC2',
 	author_email     = 'jonas.wallin81@gmail.com',
-	install_requires = ['ConfigParser',
-				        'boto'])
+	install_requires = ['boto'])
 setup(**metadata)
