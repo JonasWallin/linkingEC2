@@ -93,7 +93,7 @@ class LinkingHandler(object):
             so dont need to very fingerprint
         """
         if not self.silent:
-            print("ssh-kescan the nodes from auto login from {name}:".format(name = node[0]['name']),end='')
+            print("ssh-kescan the nodes from auto login from {name}:".format(name = self.nodes[0]['name']),end='')
             sys.stdout.flush()        
 
         hosts = ''
@@ -105,7 +105,7 @@ class LinkingHandler(object):
         input_string = "ssh  -i {keyloc} -o 'StrictHostKeyChecking no'  {user}@{hostname} 'echo {message}'".format(
                             keyloc   = self.my_key_location,
                             user     = self.user,
-                            hostname =  nodes[0]['public_dns'],
+                            hostname = self.nodes[0]['public_dns'],
                             message  = message)
         os_res = os.system(input_string)
         
