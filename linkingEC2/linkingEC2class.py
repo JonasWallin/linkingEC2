@@ -250,7 +250,33 @@ class LinkingHandler(object):
         return res
             
     
+    def send_command_ssh(self, command, nodes = None, silent = False):
+        """
+            send *command* to *nodes* through ssh
+        """
+        
+        nodes_to_ssh = self._intlist_to_nodes(nodes)        
+        os_res = 0
     
+        for node in nodes_to_ssh: 
+        
+            if not self.silent:
+                print("sshing in: {command} :".format(command = command))
+                sys.stdout.flush()
+
+            input_string = "ssh  -i {keyloc} -o 'StrictHostKeyChecking no'  {user}@{hostname} '{command}'".format(
+                            keyloc   = self.my_key_location,
+                            user     = self.user,
+                            hostname =  node['public_dns'],
+                            command  = command)  
+                            
+            os_res = os.system(input_string)
+            
+            if os_res != 0:
+                return os_res
+            
+        return os_res
+        
     def test_ssh_in(self):
         """
             testing starting the ssh making sure things works!
