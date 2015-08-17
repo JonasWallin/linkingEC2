@@ -8,3 +8,5 @@ The ipython notebook script/running MPI4py.ipynb shows how to set up a cluster a
 
 ####TODO:
 parallel the loops!!!! (see for instance http://scottsievert.github.io/blog/2014/07/30/simple-python-parallelism/)
+
+add: export DEBIAN_FRONTEND=noninteractive
