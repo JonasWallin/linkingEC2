@@ -13,13 +13,15 @@ class LinkingHandler(object):
     """
     
     
-    def __init__(self, aws_secret_access_key, aws_access_key_id, aws_region_name, key_name, key_location):
+    def __init__(self, aws_secret_access_key, aws_access_key_id, aws_region_name, key_name, key_location
+               , processes = None):
         """
             *aws_region_name*       which region one is loging into
             *key_location*          where on has the key to ssh into EC2
             *key_name*              what is the keyname 
             *aws_secret_access_key* to log into amazon
             *aws_access_key_id*     to log into amazon
+        *processes*             number of processes allowed to be used
             
         """
         
@@ -41,6 +43,7 @@ class LinkingHandler(object):
         self.user          = 'ubuntu'
         self.pip_installed = False
         self.apt_update    = False
+        self.processes     = processes
         
 
     def __del__(self):
@@ -212,8 +215,8 @@ class LinkingHandler(object):
                                           nodes = nodes_to_install_to,
                                           my_key = self.my_key_location,
                                           silent = self.silent,
-                                          user   = self.user
-                                          )
+                                          user   = self.user,
+                                          processes = self.processes)
         return res
     
     def apt_install(self, packages, nodes = None):
@@ -232,7 +235,8 @@ class LinkingHandler(object):
             res = update_apt_get_to_nodes(nodes = self.nodes,
                                          my_key = self.my_key_location,
                                          silent = self.silent,
-                                         user   = self.user
+                                         user   = self.user,
+                                         processes = self.processes
                                          )
             if res == 0:
                 self.apt_update    = True      
@@ -245,7 +249,8 @@ class LinkingHandler(object):
                                     nodes = nodes_to_install_to,
                                     my_key = self.my_key_location,
                                     silent = self.silent,
-                                    user   = self.user
+                                    user   = self.user,
+                                    processes = self.processes
                                     )
         return res
             
@@ -261,7 +266,8 @@ class LinkingHandler(object):
         for node in nodes_to_ssh: 
         
             if not self.silent:
-                print("sshing in: {command} :".format(command = command))
+                print('{node}, sshing in  {command} '.format(node = node['name'], 
+										 command = command))
                 sys.stdout.flush()
 
             input_string = "ssh  -i {keyloc} -o 'StrictHostKeyChecking no'  {user}@{hostname} '{command}'".format(
@@ -272,9 +278,19 @@ class LinkingHandler(object):
                             
             os_res = os.system(input_string)
             
+            
+            
             if os_res != 0:
+
+                if not self.silent:
+                    print('{node} failed: \n {in_string}'.format(node = node['name'],
+										     in_string =input_string))
+                    sys.stdout.flush()
                 return os_res
             
+            if not self.silent:
+                print('{node} done'.format(node = node['name']))
+                sys.stdout.flush()
         return os_res
         
     def test_ssh_in(self):
