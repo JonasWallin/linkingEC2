@@ -84,7 +84,7 @@ class LinkingHandler(object):
 			Connect spot instances
 		"""
 		
-		self.reservation = self.conn.get_all_spot_instance_requests()
+		self.reservation = self.conn.get_all_spot_instance_requests()[0]
 		
 		
 													
