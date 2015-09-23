@@ -51,7 +51,7 @@ class LinkingHandler(object):
 		self.terminate_cluster()
 
 
-	def connect_cluster(self, get_n = True):
+	def connect_cluster(self, get_n = True, first_time =True):
 		"""
 			Connecting to an alredy started cluster
 			*get_n* - get number of processes for each node
@@ -65,7 +65,17 @@ class LinkingHandler(object):
 			get_number_processes(nodes  = self.nodes,
 								 my_key =  self.my_key_location,
 								 user   = self.user,
-								 silent = self.silent)				
+								 silent = self.silent)	
+		if first_time:
+			self.copy_files_to_nodes(file_name = self.my_key_location, 
+									 destination = '~/.ssh/id_rsa')
+			self._ssh_disable_StrictHostKeyChecking()
+			#copy_file_to_nodes(nodes = self.nodes, 
+			#				   file_location = self.my_key_location, 
+			#				   destination = '~/.ssh/id_rs',
+			#				   my_key = self.my_key_location)
+						
+			self.setup_nodefile()			
 	def start_cluster(self, instance, instance_type, security_groups, count = 1,
 					  extra_build = True):
 		"""
