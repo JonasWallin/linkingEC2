@@ -75,7 +75,39 @@ class LinkingHandler(object):
 			#				   destination = '~/.ssh/id_rs',
 			#				   my_key = self.my_key_location)
 						
-			self.setup_nodefile()			
+			self.setup_nodefile()	
+
+
+
+	def connect_spot_instance(self, extra_build = True):
+		"""
+			Connect spot instances
+		"""
+		
+		self.reservation = self.conn.get_all_spot_instance_requests()
+		
+		
+													
+		self.nodes = get_dns_name(self.reservation, self.conn, silent = self.silent)
+		
+		if extra_build:
+			self.test_ssh_in()
+			# collecting number of processes avialble at the nodes
+			get_number_processes(nodes  = self.nodes,
+								 my_key =  self.my_key_location,
+								 user   = self.user,
+								 silent = self.silent)
+	
+			#copying the ssh keys to nodes
+	
+			self.copy_files_to_nodes(file_name = self.my_key_location, 
+									 destination = '~/.ssh/id_rsa')
+			self._ssh_disable_StrictHostKeyChecking()
+			#copy_file_to_nodes(nodes = self.nodes, 
+			#				   file_location = self.my_key_location, 
+			#				   destination = '~/.ssh/id_rs',
+			#				   my_key = self.my_key_location)			
+					
 	def start_cluster(self, instance, instance_type, security_groups, count = 1,
 					  extra_build = True):
 		"""
