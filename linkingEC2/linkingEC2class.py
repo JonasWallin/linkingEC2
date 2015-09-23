@@ -56,7 +56,7 @@ class LinkingHandler(object):
 			*get_n* - get number of processes for each node
 		"""
 		
-		self.reservation = self.conn.get_all_reservations()
+		self.reservation = self.conn.get_all_reservations()[0]
 		
 		self.nodes = get_dns_name(self.reservation, self.conn, silent = self.silent)
 		
