@@ -169,10 +169,10 @@ def _update_apt_get_to_nodes_loop(args):
 	my_key = args[2]
 	user   = args[3]
 	
-	input_string = 'sudo apt-get -y update'
+	input_string = 'sudo apt-get -y --force-yes update'
 	res_update   = _remote_on_node(node, silent, my_key, input_string, user, message = 'update apt-get')	
 	
-	input_string = 'sudo apt-get -y upgrade -y'
+	input_string = 'sudo apt-get -y --force-yes upgrade -y'
 	res_upgrade  = _remote_on_node(node, silent, my_key, input_string, user, message = 'upgrade apt-get') 	  
 	
 	return(res_update + res_upgrade)
@@ -318,7 +318,7 @@ def import_package_to_nodes(packages, nodes, my_key, method = 'apt', user = 'ubu
 		packages = " ".join(packages)
 	
 	if method == 'apt':
-		method = 'apt-get -y install'
+		method = 'apt-get -y --force-yes install'
 	if method == 'pip':
 		method = 'pip install'
 		
