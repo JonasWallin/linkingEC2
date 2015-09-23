@@ -1,6 +1,7 @@
 from __future__ import print_function
 from .linkingEC2 import *
 import boto.ec2
+import os
 
 class LinkingHandler(object):
 	"""
@@ -123,7 +124,23 @@ class LinkingHandler(object):
 						   silent		  = True)
 
 	
-	def copy_files_to_nodes(self, file_name, destination = '~/', nodes = None):
+	
+	def copy_files_from_node(self, file_name, destination = os.curdir, node = None):
+		
+		
+		if node is None:
+			node = self.nodes[0]
+		else:
+			node = self.nodes[node]
+			
+		copy_file_from_node(node = node, 
+						   file_location = file_name, 
+						   destination = destination,
+						   my_key		= self.my_key_location,
+						   user		  = self.user,
+						   silent		= self.silent)
+		
+	def copy_files_to_nodes(self,  file_name, destination = '~/',      nodes = None):
 		"""
 			copying {file_name} to {destination} in {nodes}
 			*file_name*   name of files to be copied
@@ -154,7 +171,7 @@ class LinkingHandler(object):
 							 file_name = '~/nodefile', 
 							 my_key = self.my_key_location, 
 							 test=self.test) 
-							 
+		
 		create_file_to_nodes(self.nodes[0], 
 							 file_content = HOST_STRING,
 							 file_name = '/etc/hosts',

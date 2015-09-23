@@ -178,6 +178,46 @@ def _update_apt_get_to_nodes_loop(args):
 	return(res_update + res_upgrade)
 
 
+def copy_file_from_node(node, file_location, destination, my_key, user = 'ubuntu', silent = False):
+	"""
+		copies the file from the node to destination of the local computer (using scp)
+		*file_location* - either a string or a list of location of files
+		*destination*   - desitnation of the fiels
+		*nodes*		 - list from get_dns_names or single element from the same
+		*my_key*		- location of the key
+		*user*		  - the amazon user (usually ubuntu or root)	
+	"""
+
+
+	if isinstance(file_location, list):
+		file_location = " ".join(file_location)
+	
+	if not silent:
+		print('copying {files} to local computer {dest}'.format(files= file_location, dest = destination))
+	
+	
+	if not silent:
+		print('copying files to {name}'.format(name = node['name']), end = '')
+		sys.stdout.flush()
+	
+	file_location += ' ' + destination
+	destination = file_location
+	os_res = _remote(host = node['public_dns'], src = '',
+				dest=destination ,credential = my_key, test = False, user = user, silent = True)
+	
+	if os_res != 0:
+		print(' failed : ')
+		if not silent:
+			_remote(host = node['public_dns'], src = '',
+				dest=destination ,credential = my_key, test = False, user = user, silent = False)
+		sys.stdout.flush()
+		return os_res
+		
+	elif not silent:
+		print(' done')
+		sys.stdout.flush() 
+
+	return os_res
 
 def copy_file_to_nodes(nodes, file_location, destination, my_key, user = 'ubuntu', silent = False):
 	"""
