@@ -37,29 +37,73 @@ class LinkingHandler(object):
 								  aws_secret_access_key			= self.aws_secret_access_key)
 
 
-		self.reservation   = None
-		self.nodes		 = None
-		self.silent		= False
-		self.test		  = False
-		self.user		  = 'ubuntu'
-		self.pip_installed = False
-		self.apt_update	= False
-		self.processes	 = processes
+		self.reservation   			= None
+		self.nodes		 			= None
+		self.silent					= False
+		self.test		  			= False
+		self.user		  			= 'ubuntu'
+		self.pip_installed 			= False
+		self.apt_update				= False
+		self.processes	 			= processes
+		self.spotprice_reservation  = []
+		self._shutdown_if_exit      = True # if false won't close the cluster when object is destroyed
 		
 
 	def __del__(self):
-		self.terminate_cluster()
+		
+		if self._shutdown_if_exit:
+			self.terminate_cluster()
 
 
-	def connect_cluster(self, get_n = True, first_time =True):
+	def connect_cluster(self, first_time =True):
 		"""
 			Connecting to an alredy started cluster
-			*get_n* - get number of processes for each node
+			*get_n*	  - get number of processes for each node
+			*first_time* - if the cluster has not been setup before
 		"""
 		
 		self.reservation = self.conn.get_all_reservations()[0]
 		
 		self.nodes = get_dns_name(self.reservation, self.conn, silent = self.silent)
+		
+		self.setup_cluster(get_n = True, first_time = first_time)	
+
+
+	def connect_spot_instances(self, first_time =True):
+		"""
+			Connect to spot instances 
+			
+			*get_n*      collect number of process for the nodes
+			*first_time* build up the basic structure
+			
+		"""
+		
+		self.spotprice_reservation = self.conn.get_all_spot_instance_requests()
+		for i,spot in enumerate(self.spotprice_reservation):
+			if spot.instance_id is not None:
+				res = self.conn.get_all_instances(instance_ids=[spot.instance_id])
+				node_alias  = 'node{0:03d}'.format(i+1)
+				self.reservation.append(res[0].instances[0])
+				public_dns  = res[0].instances[0].public_dns_name
+				private_dns = res[0].instances[0].private_dns_name
+				private_ip_address = res[0].instances[0].private_ip_address
+				self.nodes.append({'name'  :node_alias,
+							 'public_dns' :public_dns,
+							  'private_dns':private_dns,
+							 'private_ip' :private_ip_address})
+		
+													
+		
+		self.setup_cluster(get_n = True, first_time = first_time)		
+					
+					
+	def setup_cluster(self, get_n = True, first_time = True):
+		'''
+			building copying files and adding ssh keys to all nodes
+			this function is for helping the MPI to work across nodes
+			*get_n*        - collect number of processes each node has
+			*first_time*   - should we running things? (if first_time is false we do bascilly notihng)
+		'''		
 		
 		if get_n:
 			get_number_processes(nodes  = self.nodes,
@@ -76,37 +120,7 @@ class LinkingHandler(object):
 			#				   my_key = self.my_key_location)
 						
 			self.setup_nodefile()	
-
-
-
-	def connect_spot_instance(self, extra_build = True):
-		"""
-			Connect spot instances
-		"""
 		
-		self.reservation = self.conn.get_all_spot_instance_requests()[0]
-		
-		
-													
-		self.nodes = get_dns_name(self.reservation, self.conn, silent = self.silent)
-		
-		if extra_build:
-			self.test_ssh_in()
-			# collecting number of processes avialble at the nodes
-			get_number_processes(nodes  = self.nodes,
-								 my_key =  self.my_key_location,
-								 user   = self.user,
-								 silent = self.silent)
-	
-			#copying the ssh keys to nodes
-	
-			self.copy_files_to_nodes(file_name = self.my_key_location, 
-									 destination = '~/.ssh/id_rsa')
-			self._ssh_disable_StrictHostKeyChecking()
-			#copy_file_to_nodes(nodes = self.nodes, 
-			#				   file_location = self.my_key_location, 
-			#				   destination = '~/.ssh/id_rs',
-			#				   my_key = self.my_key_location)			
 					
 	def start_cluster(self, instance, instance_type, security_groups, count = 1,
 					  extra_build = True):
@@ -129,25 +143,7 @@ class LinkingHandler(object):
 													
 		self.nodes = get_dns_name(self.reservation, self.conn, silent = self.silent)
 		
-		if extra_build:
-			self.test_ssh_in()
-			# collecting number of processes avialble at the nodes
-			get_number_processes(nodes  = self.nodes,
-								 my_key =  self.my_key_location,
-								 user   = self.user,
-								 silent = self.silent)
-	
-			#copying the ssh keys to nodes
-	
-			self.copy_files_to_nodes(file_name = self.my_key_location, 
-									 destination = '~/.ssh/id_rsa')
-			self._ssh_disable_StrictHostKeyChecking()
-			#copy_file_to_nodes(nodes = self.nodes, 
-			#				   file_location = self.my_key_location, 
-			#				   destination = '~/.ssh/id_rs',
-			#				   my_key = self.my_key_location)
-						
-			self.setup_nodefile()
+		self.setup_cluster(get_n = True, first_time = extra_build)
 		
 	def _ssh_disable_StrictHostKeyChecking(self):
 		"""
@@ -182,7 +178,7 @@ class LinkingHandler(object):
 						   user		  = self.user,
 						   silent		= self.silent)
 		
-	def copy_files_to_nodes(self,  file_name, destination = '~/',      nodes = None):
+	def copy_files_to_nodes(self,  file_name, destination = '~/',	  nodes = None):
 		"""
 			copying {file_name} to {destination} in {nodes}
 			*file_name*   name of files to be copied
@@ -262,6 +258,10 @@ class LinkingHandler(object):
 		"""
 			closes down the cluster!
 		"""
+		
+		for spot_instance in self.spotprice_reservation:
+			self.conn.cancel_spot_instance_requests(spot_instance)
+		
 		for i in range(len(self.reservation.instances)):
 			self.reservation.instances[i].terminate()
 	
