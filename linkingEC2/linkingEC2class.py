@@ -85,14 +85,16 @@ class LinkingHandler(object):
 			if spot.instance_id is not None:
 				res = self.conn.get_all_instances(instance_ids=[spot.instance_id])
 				node_alias  = 'node{0:03d}'.format(i+1)
-				reservation.append(res[0].instances[0])
 				public_dns  = res[0].instances[0].public_dns_name
 				private_dns = res[0].instances[0].private_dns_name
 				private_ip_address = res[0].instances[0].private_ip_address
-				nodes.append({'name'  :node_alias,
-							 'public_dns' :public_dns,
-							  'private_dns':private_dns,
-							 'private_ip' :private_ip_address})
+				if len(private_dns) > 0:
+					reservation.append(res[0].instances[0])
+					
+					nodes.append({'name'  :node_alias,
+								 'public_dns' :public_dns,
+								  'private_dns':private_dns,
+								 'private_ip' :private_ip_address})
 		
 													
 		self.reservation = reservation

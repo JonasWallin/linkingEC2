@@ -9,6 +9,6 @@ The ipython notebook script/running MPI4py.ipynb shows how to set up a cluster a
 ####TODO:
 * parallel the function send_command_ssh
 * add: export DEBIAN_FRONTEND=noninteractive
-* Add spotprices usage
+* Add spotprices usage ** , currently there is a incosistency in spot price versus regular reservations!!!, fix it!!
 * Add possiblity to turn off closing connection when terminting the object
 * Add starting up connection
