@@ -105,11 +105,6 @@ class LinkingHandler(object):
 			*first_time*   - should we running things? (if first_time is false we do bascilly notihng)
 		'''		
 		
-		if get_n:
-			get_number_processes(nodes  = self.nodes,
-								 my_key =  self.my_key_location,
-								 user   = self.user,
-								 silent = self.silent)	
 		if first_time:
 			self.copy_files_to_nodes(file_name = self.my_key_location, 
 									 destination = '~/.ssh/id_rsa')
@@ -120,6 +115,13 @@ class LinkingHandler(object):
 			#				   my_key = self.my_key_location)
 						
 			self.setup_nodefile()	
+			
+			
+		if get_n:
+			get_number_processes(nodes  = self.nodes,
+								 my_key =  self.my_key_location,
+								 user   = self.user,
+								 silent = self.silent)	
 		
 					
 	def start_cluster(self, instance, instance_type, security_groups, count = 1,
