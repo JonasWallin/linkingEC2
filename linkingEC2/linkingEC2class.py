@@ -360,7 +360,7 @@ class LinkingHandler(object):
 										 command = command))
 				sys.stdout.flush()
 
-			input_string = "ssh  -i {keyloc} -o 'StrictHostKeyChecking no'  {user}@{hostname} '{command}'".format(
+			input_string = """ssh  -i {keyloc} -o 'StrictHostKeyChecking no'  {user}@{hostname} "{command}" """.format(
 							keyloc   = self.my_key_location,
 							user	 = self.user,
 							hostname =  node['public_dns'],
